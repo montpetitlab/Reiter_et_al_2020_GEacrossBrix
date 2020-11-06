@@ -254,7 +254,7 @@ We discuss these observations below.
 info17 <- info %>%
   filter(year == 2017)
 
-counts17 <- read_tsv("../v2017/outputs/counts/raw_counts.tsv") %>%
+counts17 <- read_tsv("v2017/outputs/counts/raw_counts.tsv") %>%
   filter(grepl(pattern = "^Y", x = gene)) 
 colnames(counts17) <- gsub("_readcounts.txt", "", colnames(counts17))
 counts17 <- counts17 %>%
@@ -270,7 +270,7 @@ info17 <- info17[order(match(info17$id, colnames(counts17))), ]
 info19 <- info %>%
   filter(year == 2019)
 
-counts19 <- read_tsv("../v2019/outputs/counts/raw_counts.tsv") %>%
+counts19 <- read_tsv("v2019/outputs/counts/raw_counts.tsv") %>%
   dplyr::filter(grepl(pattern = "^Y", x = gene))
 colnames(counts19) <- gsub("_readcounts.txt", "", colnames(counts19))
 counts19 <- counts19 %>%
@@ -398,63 +398,6 @@ write_tsv(repressed_v2019 %>%
 
 ```{r uspetproteomap, fig.cap="Transcriptome remodeling in fermentation is consistent across fermentations and vintages. A. Upset plot showing the intersection of genes that are significantly induced at the beginning and end of fermentation in each vintage using a log2 fold change cut off of 1. The majority of genes are consistently induced across fermentations and vintages. B. Proteomaps depicting Gene Ontologies (left) and genes (right) that are induced in early (top) and late (bottom) fermentation. The size of individual genes reflects the its log2 fold change value. Not all genes that are significantly induced are depicted."}
 include_graphics("figures/upset_and_proteomaps.pdf") 
-```
-
-```{r enrichment, eval = F}
-induced_enrich_go <- enrichGO(induced$COMMON, OrgDb = org.Sc.sgd.db::org.Sc.sgd.db,
-                             keyType = "GENENAME", ont = "ALL", pAdjustMethod = "bonferroni")
-tmp <- induced_enrich_go@result
-plot_rows <- tmp %>%
-  filter(p.adjust < .01) %>%
-  nrow()
-dotplot(induced_enrich_go, showCategory = plot_rows, font.size = 4)
-
-repressed_enrich_go <- enrichGO(repressed$COMMON, OrgDb = org.Sc.sgd.db::org.Sc.sgd.db,
-                             keyType = "GENENAME", ont = "ALL", pAdjustMethod = "bonferroni")
-tmp <- repressed_enrich_go@result
-plot_rows <- tmp %>%
-  filter(p.adjust < .01) %>%
-  nrow()
-dotplot(repressed_enrich_go, showCategory = plot_rows, font.size = 6)
-
-## KEGG
-induced_enrich_kegg <- enrichKEGG(induced$ORF, organism = "sce")
-tmp <- induced_enrich_kegg@result
-plot_rows <- tmp %>%
-  filter(p.adjust < .01) %>%
-  nrow()
-dotplot(induced_enrich_kegg, showCategory = plot_rows, font.size = 12)
-
-repressed_enrich_kegg <- enrichKEGG(repressed$ORF, organism = "sce")
-
-tmp <- repressed_enrich_kegg@result
-plot_rows <- tmp %>%
-  filter(p.adjust < .01) %>%
-  nrow()
-dotplot(repressed_enrich_kegg, showCategory = plot_rows, font.size = 12)
-```
-
-```{r flavor, eval = F}
-flavor <- read_csv("~/github/2020-chardonnay/inputs/flavor_genes_doi_10.1007_s00253-012-4370-z.csv")
-
-table(induced$ORF %in% flavor$ORF)
-table(repressed$ORF %in% flavor$ORF)
-
-induced[induced$ORF %in% flavor$ORF, ]
-tmp_i <- flavor[flavor$ORF %in% induced$ORF, ]
-table(tmp_i$category)
-
-repressed[repressed$ORF %in% flavor$ORF, ]
-tmp_r <- flavor[flavor$ORF %in% repressed$ORF, ]
-table(tmp_r$category)
-```
-
-```{r com2, eval = F}
-com2_sup <- read_csv("../reference_genes/com2_suptab4.csv")
-dim(com2_sup)
-table(induced$ORF %in% com2_sup$ORF)
-tmp <- induced[induced$ORF %in% com2_sup$ORF, ]
-table(repressed$ORF %in% com2_sup$ORF)
 ```
 
 <!-- TABLES  -->
@@ -973,11 +916,11 @@ After three days, we increased the fermentation temperature to 21C and programme
 We rehydrated *S. cerevisiae* RC212 with Superstart Rouge at 20 g/hL and inoculated fermentations with 25 g/hL of yeast.
 Approximately 24 hours after inoculation, we adjusted nitrogen content in fermentations using DAP using the formula `(target YAN - 35 mg/L - initial YAN)/2`, and Nutristart using 25 g/hL. 
 We only adjusted nitrogen if target YAN was below 250 mg/L.
-Approximately 48 hours after fermentation, we increased the fermentation temperature to 32C and again added DAP using the formula `(target YAN - 35 mg/L - initial YAN)/2`.
+Approximately 48 hours after fermentation, we increased the fermentation temperature to 27C and again added DAP using the formula `(target YAN - 35 mg/L - initial YAN)/2`.
 We ran fermentations to completion, when brix < 0. 
 We sampled fermentations for brix and RNA at 16 hour, 64 hours, and 112 hours relative to inoculation. 
 We performed a ten minute pump over prior to sampling each tank. 
-For RNA samples, we sampled 13 mL of wine and centrifuged at 5000 g for 5 minutes (CHECK PROTOCOL). 
+For RNA samples, we sampled 13 mL of wine and centrifuged at 4000 rmp for 5 minutes. 
 We discarded the supernatant and froze the pellet in liquid nitrogen, and then stored samples at -80C until RNA extraction. 
 
 ## RNA extraction
