@@ -145,6 +145,9 @@ info <- info %>%
   filter(!between(hr, 19, 60)) %>%
   filter(!between(hr, 84, 105)) %>%
   filter(rootstock == "101_14")
+
+# calculate Brix consumption to use for differential expression
+info$brix_consumption <- info$initial_brix - info$brix
 ```
 
 ```{r brix_plot1, include = F}
@@ -167,7 +170,7 @@ brix <- rbind(brix17, brix19) %>%
 brix_plot1 <- ggplot(brix, aes(y = brix, x = hours_post_innoculation, color = ava_id, shape = tank)) +
   geom_line(alpha = .7) +
   facet_wrap(~year, ncol = 1, nrow = 2) +
-  labs(x = "time (hours)", color = "vineyard", shape = "tank") +
+  labs(x = "time (hours)", y = "Brix", color = "vineyard", shape = "tank") +
   theme_minimal() +
   theme(legend.position = "bottom",
         strip.text.x = element_text(size = 14, face = "bold")) +
@@ -199,9 +202,9 @@ info$hr2 <- ifelse(info$hr2 > 105, 112, info$hr2)
 brix_plot2 <- ggplot(info, aes(y = brix, x = hr2)) +
   geom_point(alpha = .25) +
   theme_minimal() +
-  facet_wrap(~year, nrow = 2) +
+  facet_wrap(~year, ncol = 2) +
   theme(strip.text = element_text(size=12)) +
-  labs(x = "time (hours)")
+  labs(x = "time (hours)", y = "Brix")
 ```
 
 ## A consistent whole-transcriptome remodeling occurs during fermentation independent of vintage
@@ -240,12 +243,12 @@ info19 <- info19[order(match(info19$id, colnames(counts19))), ]
 ```{r diffex17}
 d0_17 <- DGEList(counts17)                    # initialize the DGE object
 d17 <- calcNormFactors(d0_17)                 # calculate normalization factors
-brix_mm17 <- model.matrix(~info17$brix)       # build model matrix
+brix_mm17 <- model.matrix(~info17$brix_consumption)       # build model matrix
 brix_y17 <- voom(d17, brix_mm17, plot = F)    # voom
 brix_fit17 <- lmFit(brix_y17, brix_mm17)      # perform lm fit
 brix_17 <- brix_contrast(fit = brix_fit17, coeff = 2) # Test brix coefficient
 # filter to equivalent of log2FC of 1 over course of fermentation
-brix_17$logFC_adj <- brix_17$logFC * (max(info$brix) - min(info$brix))
+brix_17$logFC_adj <- brix_17$logFC * (max(info$brix_consumption) - min(info$brix_consumption))
 brix_17<- brix_17 %>%
   filter(abs(logFC_adj) > 1)
 
@@ -258,12 +261,12 @@ d19 <- calcNormFactors(d0_19)           # calculate normalization factors
 brix19 <- info %>%
   dplyr::filter(year == 2019) %>%
   dplyr::filter(!is.na(brix))           # remove inoculum samples
-brix_mm19 <- model.matrix(~info19$brix)
+brix_mm19 <- model.matrix(~info19$brix_consumption)
 brix_y19 <- voom(d19, brix_mm19, plot = F)
 brix_fit19 <- lmFit(brix_y19, brix_mm19)
 brix_19 <- brix_contrast(fit = brix_fit19, coeff = 2) # Test brix coefficient
 # filter to equivalent of log2FC of 1 over course of fermentation
-brix_19$logFC_adj <- brix_19$logFC * (max(info$brix) - min(info$brix))
+brix_19$logFC_adj <- brix_19$logFC * (max(info$brix_consumption) - min(info$brix_consumption))
 brix_19 <- brix_19 %>%
   filter(abs(logFC_adj) > 1)
 
@@ -320,7 +323,7 @@ logfc <- brix_17 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj = round(logFC_adj, digits = 2))
 
-hxt1_y2017 <- ggplot(info17, aes(y = Y, x = brix)) +
+hxt1_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "norm log counts",
        x = "",
@@ -342,9 +345,10 @@ logfc <- brix_19 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj =  round(logFC_adj, digits = 2))
 
-hxt1_y2019 <- ggplot(info19, aes(y = Y, x = brix)) +
+hxt1_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "norm log counts",
+       x = "decrease in Brix",
        title = "",
        subtitle = "2019",
        caption =expression(paste(log[2], "FC = 3.25"))) +
@@ -363,7 +367,7 @@ logfc <- brix_17 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
 
-hxt4_y2017 <- ggplot(info17, aes(y = Y, x = brix)) +
+hxt4_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
        x = "",
@@ -385,9 +389,10 @@ logfc <- brix_19 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
 
-hxt4_y2019 <- ggplot(info19, aes(y = Y, x = brix)) +
+hxt4_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
+       x = "decrease in Brix",
        title = "",
        subtitle = "2019",
        caption =expression(paste(log[2], "FC = 5.3"))) +
@@ -407,7 +412,7 @@ logfc <- brix_17 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
 
-adh1_y2017 <- ggplot(info17, aes(y = Y, x = brix)) +
+adh1_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
        x = "",
@@ -429,9 +434,10 @@ logfc <- brix_19 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
 
-adh1_y2019 <- ggplot(info19, aes(y = Y, x = brix)) +
+adh1_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
+       x = "decrease in Brix",
        title = "",
        subtitle = "2019") +
        #caption =expression(paste(log[2], "FC = 5.3"))) +
@@ -575,7 +581,7 @@ logfc <- brix_17 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
 
-man2_y2017 <- ggplot(info17, aes(y = Y, x = brix)) +
+man2_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
        x = "",
@@ -597,9 +603,10 @@ logfc <- brix_19 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
 
-man2_y2019 <- ggplot(info19, aes(y = Y, x = brix)) +
+man2_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
+       x = "decrease in Brix",
        title = "",
        subtitle = "2019",
        caption =expression(paste(log[2], "FC = 6.74"))) +
@@ -618,7 +625,7 @@ logfc <- brix_17 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
 
-hxt13_y2017 <- ggplot(info17, aes(y = Y, x = brix)) +
+hxt13_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "norm log counts",
        x = "",
@@ -640,9 +647,10 @@ logfc <- brix_19 %>%
   dplyr::select(logFC_adj) %>% 
   mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
 
-hxt13_y2019 <- ggplot(info19, aes(y = Y, x = brix)) +
+hxt13_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "norm log counts",
+       x = "decrease in Brix",
        title = "",
        subtitle = "2019",
        caption =expression(paste(log[2], "FC = 7.26"))) +
