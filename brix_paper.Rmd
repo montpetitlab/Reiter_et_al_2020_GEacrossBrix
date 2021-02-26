@@ -169,11 +169,13 @@ brix <- rbind(brix17, brix19) %>%
   filter(!ava_id %in% c("OR1", "OR2", "AV2", "RRV2", "RRV3"))
 brix_plot1 <- ggplot(brix, aes(y = brix, x = hours_post_innoculation, color = ava_id, shape = tank)) +
   geom_line(alpha = .7) +
-  facet_wrap(~year, ncol = 1, nrow = 2) +
+  facet_wrap(~year, ncol = 1, nrow = 2, scales = "free_x") +
+  xlim(0, 141) +
   labs(x = "time (hours)", y = "Brix", color = "vineyard", shape = "tank") +
   theme_minimal() +
+  #annotate("text", x = 100, y = 20, label ="2017") +
   theme(legend.position = "bottom",
-        strip.text.x = element_text(size = 14, face = "bold")) +
+        strip.text.x = element_blank()) +
   # theme(legend.position = "bottom",
   #       axis.text.x = element_text(angle = 90),
   #       legend.title = element_text(size=12, face = "bold"),
@@ -190,6 +192,7 @@ brix_plot1 <- ggplot(brix, aes(y = brix, x = hours_post_innoculation, color = av
                      breaks = c('AV1', 'SNC1','SNC2', 'RRV1', 
                                  'CRN1', 'AS1', 'AS2', 'SMV1', 'SMV2','SRH1')) +
   scale_shape(guide = 'none')
+brix_plot1
 ```
 
 ```{r brix_plot2, include = F}
@@ -281,12 +284,12 @@ repressed_v2017 <- filter(brix_17, logFC < 0)
 induced_v2019   <- filter(brix_19, logFC > 0) 
 repressed_v2019 <- filter(brix_19, logFC < 0)
 
-brix_list <- list("induced late 2019" = repressed_v2019$ORF,
-                  "induced early 2019"  = induced_v2019$ORF,
-                  "induced late 2017" = repressed_v2017$ORF,
-                  "induced early 2017"   = induced_v2017$ORF)
+brix_list <- list("expressed late 2019" = repressed_v2019$ORF,
+                  "expressed early 2019"  = induced_v2019$ORF,
+                  "expressed late 2017" = repressed_v2017$ORF,
+                  "expressed early 2017"   = induced_v2017$ORF)
 brix_list_upset <- UpSetR::fromList(brix_list)
-intersects <- c("induced late 2019", "induced early 2019", "induced late 2017", "induced early 2017")
+intersects <- c("expressed late 2019", "expressed early 2019", "expressed late 2017", "expressed early 2017")
 brix_list_upset[intersects] = brix_list_upset[intersects] == 1
 upset(brix_list_upset, intersects, width_ratio = 0.1,
                     sort_intersections_by='cardinality', height_ratio = 1, 
@@ -328,14 +331,14 @@ hxt1_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   labs(y = "norm log counts",
        x = "",
        title = expression(paste(italic("HXT1"))),
-       subtitle = "2017",
-       caption =expression(paste(log[2], "FC = 4.3"))) +
+       subtitle = "2017") +
+  annotate("text", x=18, y=4.1, size = 3, label=expression(paste(log[2], "FC = -4.52"))) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         axis.title.x = element_blank()) +
   geom_smooth(method='lm', color = "grey", alpha = .7, se= F)  +
-  ylim(c(0, 13))
+  ylim(c(4, 15))
 
 
 Y <- brix_y19$E[gene, ]
@@ -350,13 +353,13 @@ hxt1_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   labs(y = "norm log counts",
        x = "decrease in Brix",
        title = "",
-       subtitle = "2019",
-       caption =expression(paste(log[2], "FC = 3.25"))) +
+       subtitle = "2019") +
+  annotate("text", x=18, y=4.1, size = 3, label=expression(paste(log[2], "FC = -3.28"))) +
   theme_minimal() +
   theme(plot.title = element_blank(),
         plot.subtitle = element_text(hjust = 0.5)) +
   geom_smooth(method='lm', color = "grey", alpha = .7, se= F)  +
-  ylim(c(0, 13))
+  ylim(c(4, 15))
 
 # HXT4:
 gene = "YHR092C"
@@ -365,21 +368,21 @@ info17$Y = Y
 logfc <- brix_17 %>% 
   filter(ORF == gene) %>% 
   dplyr::select(logFC_adj) %>% 
-  mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
+  mutate(logFC_adj = round(logFC_adj, digits = 2))
 
 hxt4_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
        x = "",
        title = expression(paste(italic("HXT4"))),
-       subtitle = "2017",
-       caption =expression(paste(log[2], "FC = 6.8"))) +
+       subtitle = "2017") +
+  annotate("text", x=18, y=4.1, size = 3, label=expression(paste(log[2], "FC = 6.98"))) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         axis.title.x = element_blank()) +
   geom_smooth(method='lm', color = "grey", alpha = .7, se= F)  +
-  ylim(c(0, 13))
+  ylim(c(4, 15))
 
 
 Y <- brix_y19$E[gene, ]
@@ -387,30 +390,29 @@ info19$Y = Y
 logfc <- brix_19 %>% 
   filter(ORF == gene) %>% 
   dplyr::select(logFC_adj) %>% 
-  mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
+  mutate(logFC_adj = round(logFC_adj, digits = 2))
 
 hxt4_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
        x = "decrease in Brix",
        title = "",
-       subtitle = "2019",
-       caption =expression(paste(log[2], "FC = 5.3"))) +
+       subtitle = "2019") +
+  annotate("text", x=18, y=4.1, size = 3, label=expression(paste(log[2], "FC = 5.52"))) +
   theme_minimal() +
   theme(plot.title = element_blank(),
         plot.subtitle = element_text(hjust = 0.5)) +
   geom_smooth(method='lm', color = "grey", alpha = .7, se= F)  +
-  ylim(c(0, 13))
+  ylim(c(4, 15))
 
 # ADH1
-# gene = 'YGR240C' # PFK1
 gene = "YOL086C" # ADH1
 Y <- brix_y17$E[gene, ]
 info17$Y = Y
 logfc <- brix_17 %>% 
   filter(ORF == gene) %>% 
   dplyr::select(logFC_adj) %>% 
-  mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
+  mutate(logFC_adj = round(logFC_adj, digits = 2))
 
 adh1_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
@@ -418,21 +420,23 @@ adh1_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
        x = "",
        title = expression(paste(italic("ADH1"))),
        subtitle = "2017") +
-       #caption =expression(paste(log[2], "FC = 1.1"))) +
+  annotate("text", x=18, y=4.1, size = 3, label=expression(paste(log[2], "FC = -1.14"))) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         axis.title.x = element_blank()) +
   geom_smooth(method='lm', color = "grey", alpha = .7, se= F)  +
-  ylim(c(0, 15))
+  ylim(c(4, 15))
 
 
 Y <- brix_y19$E[gene, ]
 info19$Y = Y
-logfc <- brix_19 %>% 
-  filter(ORF == gene) %>% 
-  dplyr::select(logFC_adj) %>% 
-  mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
+# have to look at brix_19 before filtering logfc_abs > 1 to 
+# get this logfc val
+# logfc <- brix_19 %>% 
+#   filter(ORF == gene) %>% 
+#   dplyr::select(logFC_adj) %>% 
+#   mutate(logFC_adj = round(logFC_adj, digits = 2))
 
 adh1_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
@@ -440,17 +444,19 @@ adh1_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
        x = "decrease in Brix",
        title = "",
        subtitle = "2019") +
-       #caption =expression(paste(log[2], "FC = 5.3"))) +
+  annotate("text", x=18, y=4.1, size = 3, label=expression(paste(log[2], "FC = -0.50"))) +
   theme_minimal() +
   theme(plot.title = element_blank(),
         plot.subtitle = element_text(hjust = 0.5)) +
   geom_smooth(method='lm', color = "grey", alpha = .7, se= F)  +
-  ylim(c(0, 15))
+  ylim(c(4, 15))
 
+pdf(file = "revision_example.pdf", height = 5, width = 6)
 ggarrange(hxt1_y2017, hxt4_y2017, adh1_y2017,
           hxt1_y2019, hxt4_y2019, adh1_y2019, 
           #labels = c("A", "B", "C", "D", "E", "F"), 
           nrow = 2, ncol = 3)
+dev.off()
 ```
 
 ```{r write_diffex_out, eval = F}
@@ -529,15 +535,17 @@ table(repressed$ORF %in% esr$ORF)
 enrich_ind <- enrichGO(induced[induced$COMMON %in% esr$COMMON, ]$COMMON, OrgDb = org.Sc.sgd.db::org.Sc.sgd.db,
                              keyType = "GENENAME", ont = "BP")
 plt1 <- dotplot(enrich_ind, font.size = 8) + 
-  geom_point(color = "black")
-
+  geom_point(color = "black") + 
+  xlim(0.05, 0.3)
+plt1
 
 enrich_rep <- enrichGO(repressed[repressed$COMMON %in% esr$COMMON, ]$COMMON, OrgDb = org.Sc.sgd.db::org.Sc.sgd.db,
                              keyType = "GENENAME", ont = "BP")
 plt2 <-  dotplot(enrich_rep, font.size = 8) + 
-  geom_point(color = "black")
-
-ggarrange(plt1, plt2, common.legend = T, legend = "bottom")
+  geom_point(color = "black") +
+  xlim(0.05, 0.3)
+plt2
+ggarrange(plt1, plt2, common.legend = T, legend = "bottom", nrow =2)
 ```
 
 ```{r fsr, eval = F}
@@ -559,7 +567,7 @@ fsr_pn_distinct_go<- enrichGO(fsr_pn_distinct$COMMON, OrgDb = org.Sc.sgd.db::org
 dotplot(fsr_pn_distinct_go)
 
 fsr_pn_distinct_kegg <- enrichKEGG(fsr_pn_distinct$ORF, organism = "sce")
-dotplot(fsr_pn_distinct_kegg)
+dotplot(fsr_pn_distinct_kegg) + xlim(0, 1.4)
 fsr_pn_distinct$description <- orf_to_description(fsr_pn_distinct$ORF)
 
 # overlap with CER/ESR
@@ -579,15 +587,15 @@ info17$Y = Y
 logfc <- brix_17 %>% 
   filter(ORF == gene) %>% 
   dplyr::select(logFC_adj) %>% 
-  mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
+  mutate(logFC_adj = round(logFC_adj, digits = 2))
 
 man2_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
        x = "",
        title = expression(paste(italic("MAN2"))),
-       subtitle = "2017",
-       caption =expression(paste(log[2], "FC = 5.9"))) +
+       subtitle = "2017") +
+  annotate("text", x=6, y = 9, size = 3, label = expression(paste(log[2], "FC = 6.07")))+
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
@@ -601,15 +609,15 @@ info19$Y = Y
 logfc <- brix_19 %>% 
   filter(ORF == gene) %>% 
   dplyr::select(logFC_adj) %>% 
-  mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
+  mutate(logFC_adj = round(logFC_adj, digits = 2))
 
 man2_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "",
        x = "decrease in Brix",
        title = "",
-       subtitle = "2019",
-       caption =expression(paste(log[2], "FC = 6.74"))) +
+       subtitle = "2019") +
+  annotate("text", x=6, y = 9, size = 3, label = expression(paste(log[2], "FC = 6.99"))) +
   theme_minimal() +
   theme(plot.title = element_blank(),
         plot.subtitle = element_text(hjust = 0.5)) +
@@ -623,15 +631,15 @@ info17$Y = Y
 logfc <- brix_17 %>% 
   filter(ORF == gene) %>% 
   dplyr::select(logFC_adj) %>% 
-  mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
+  mutate(logFC_adj = round(logFC_adj, digits = 2))
 
 hxt13_y2017 <- ggplot(info17, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "norm log counts",
        x = "",
        title = expression(paste(italic("HXT13"))),
-       subtitle = "2017",
-       caption =expression(paste(log[2], "FC = 6.4"))) +
+       subtitle = "2017") +
+  annotate("text", x=6, y = 9, size = 3, label = expression(paste(log[2], "FC = 6.12")))+
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
@@ -645,23 +653,25 @@ info19$Y = Y
 logfc <- brix_19 %>% 
   filter(ORF == gene) %>% 
   dplyr::select(logFC_adj) %>% 
-  mutate(logFC_adj = -1* round(logFC_adj, digits = 2))
+  mutate(logFC_adj = round(logFC_adj, digits = 2))
 
 hxt13_y2019 <- ggplot(info19, aes(y = Y, x = brix_consumption)) +
   geom_point(color = "black", alpha = .7) +
   labs(y = "norm log counts",
        x = "decrease in Brix",
        title = "",
-       subtitle = "2019",
-       caption =expression(paste(log[2], "FC = 7.26"))) +
+       subtitle = "2019") +
+  annotate("text",  x=6, y = 9, size = 3, label = expression(paste(log[2], "FC = 7.61"))) +
   theme_minimal() +
   theme(plot.title = element_blank(),
         plot.subtitle = element_text(hjust = 0.5)) +
   geom_smooth(method='lm', color = "grey", alpha = .7, se= F)  +
   ylim(c(-3, 13))
 
+pdf("revision_polyol.pdf", height = 4.5, width = 5)
 ggarrange(hxt13_y2017, man2_y2017,  hxt13_y2019, man2_y2019,labels = c("A", "B", "C", "D"), 
           nrow = 2, ncol = 2)
+dev.off()
 ```
 
 ### Vintage-specific differences
